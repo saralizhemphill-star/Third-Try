@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Heart, BookOpen, Users, CheckCircle, Star, Play, Lock, ChevronDown, ChevronUp, ArrowRight, Mail, Shield, Award, Clock, MessageCircle, Menu, X, Loader2, AlertCircle } from "lucide-react";
+import { Heart, BookOpen, Users, CheckCircle, Star, Play, Lock, ChevronDown, ChevronUp, ArrowRight, Mail, Shield, Award, Clock, MessageCircle, Menu, X, Loader2, AlertCircle, FileText, HelpCircle, CheckSquare, XCircle, ArrowLeft, Download, Circle } from "lucide-react";
 import emailjs from "@emailjs/browser";
 import { SITE, PAIN_POINTS, MODULES, TESTIMONIALS, PRICING, FAQ, INSTRUCTOR, LEAD_MAGNET } from "./content.js";
+import { MODULE_1_LESSONS } from "./lessonContent.js";
 
 // ============================================================
 //  EmailJS Configuration
@@ -30,10 +31,14 @@ export default function ConnectedParenting() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [lessonTab, setLessonTab] = useState("content");
+  const [quizState, setQuizState] = useState({});
+  const [openSections, setOpenSections] = useState({});
+  const [completedLessons, setCompletedLessons] = useState([]);
+  const [worksheetAnswers, setWorksheetAnswers] = useState({});
 
   const handleEmailSubmit = async () => {
     if (!email) return;
-    // Basic email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailError("Please enter a valid email address.");
       return;
@@ -63,15 +68,236 @@ export default function ConnectedParenting() {
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
-  // ===== LESSON VIEWER =====
-  if (page === "lesson" && activeModule && activeLesson !== null) {
+  // ===== INTERACTIVE LESSON VIEWER (Module 1) =====
+  if (page === "lesson" && activeModule === 1 && activeLesson !== null) {
+    const mod = MODULES[0];
+    const lessonData = MODULE_1_LESSONS[activeLesson];
+    const lessonTitle = mod.lessons[activeLesson];
+    const isCompleted = completedLessons.includes(`1-${activeLesson}`);
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+          <button onClick={() => { setPage("course"); setActiveLesson(null); setLessonTab("content"); setQuizState({}); setOpenSections({}); }} className="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 text-sm">
+            <ArrowLeft size={14} /> Back to Module
+          </button>
+          <span className="text-sm text-gray-500">Module {mod.id} · Lesson {activeLesson + 1} of {mod.lessons.length}</span>
+        </nav>
+
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* Lesson Header */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{lessonTitle}</h1>
+              <div className="flex items-center gap-4 text-sm text-gray-500">
+                <span className="flex items-center gap-1"><Clock size={14} /> {lessonData.duration}</span>
+                <span className="flex items-center gap-1"><HelpCircle size={14} /> {lessonData.quiz.length} quiz questions</span>
+                <span className="flex items-center gap-1"><FileText size={14} /> Worksheet included</span>
+              </div>
+            </div>
+            {isCompleted && (
+              <span className="flex items-center gap-1 text-sm bg-teal-100 text-teal-700 px-3 py-1 rounded-full font-medium">
+                <CheckCircle size={14} /> Completed
+              </span>
+            )}
+          </div>
+
+          {/* Lesson Progress Bar */}
+          <div className="bg-white rounded-xl border border-gray-200 p-3 mb-6">
+            <div className="flex gap-1">
+              {mod.lessons.map((_, i) => (
+                <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${completedLessons.includes(`1-${i}`) ? "bg-teal-500" : i === activeLesson ? "bg-teal-300" : "bg-gray-200"}`} />
+              ))}
+            </div>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6">
+            {[
+              { key: "content", label: "Lesson Content", icon: <BookOpen size={14} /> },
+              { key: "quiz", label: "Quiz", icon: <HelpCircle size={14} /> },
+              { key: "worksheet", label: "Worksheet", icon: <FileText size={14} /> },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setLessonTab(tab.key)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${lessonTab === tab.key ? "bg-white text-teal-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* TAB: Lesson Content */}
+          {lessonTab === "content" && (
+            <div className="space-y-4">
+              {lessonData.sections.map((section, si) => {
+                const isOpen = openSections[si] !== undefined ? openSections[si] : si === 0;
+                return (
+                  <div key={si} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <button
+                      onClick={() => setOpenSections(prev => ({ ...prev, [si]: !isOpen }))}
+                      className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-7 h-7 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">{si + 1}</span>
+                        <h3 className="font-semibold text-gray-900">{section.title}</h3>
+                      </div>
+                      {isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                    </button>
+                    {isOpen && (
+                      <div className="px-6 pb-6 border-t border-gray-100 pt-4">
+                        {section.content.split("\n\n").map((para, pi) => (
+                          <p key={pi} className="text-gray-600 leading-relaxed mb-4 last:mb-0 text-[15px]">{para}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="flex justify-center pt-4">
+                <button onClick={() => setLessonTab("quiz")} className="bg-teal-600 text-white px-6 py-3 rounded-xl hover:bg-teal-700 transition-colors font-medium flex items-center gap-2">
+                  Take the Quiz <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: Quiz */}
+          {lessonTab === "quiz" && (
+            <div className="space-y-6">
+              {lessonData.quiz.map((q, qi) => {
+                const selected = quizState[qi];
+                const answered = selected !== undefined;
+                const isCorrect = selected === q.correct;
+                return (
+                  <div key={qi} className={`bg-white rounded-xl border-2 p-6 transition-colors ${answered ? (isCorrect ? "border-green-300 bg-green-50/50" : "border-red-300 bg-red-50/50") : "border-gray-200"}`}>
+                    <p className="font-semibold text-gray-900 mb-4 flex items-start gap-2">
+                      <span className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{qi + 1}</span>
+                      {q.question}
+                    </p>
+                    <div className="space-y-2 ml-8">
+                      {q.options.map((opt, oi) => (
+                        <button
+                          key={oi}
+                          onClick={() => { if (!answered) setQuizState(prev => ({ ...prev, [qi]: oi })); }}
+                          disabled={answered}
+                          className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center gap-3 ${
+                            answered && oi === q.correct
+                              ? "border-green-400 bg-green-100 text-green-800 font-medium"
+                              : answered && oi === selected && !isCorrect
+                              ? "border-red-400 bg-red-100 text-red-800"
+                              : answered
+                              ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                              : "border-gray-200 hover:border-teal-300 hover:bg-teal-50 cursor-pointer"
+                          }`}
+                        >
+                          {answered && oi === q.correct ? <CheckCircle size={16} className="text-green-600 shrink-0" /> :
+                           answered && oi === selected && !isCorrect ? <XCircle size={16} className="text-red-500 shrink-0" /> :
+                           <Circle size={16} className="text-gray-300 shrink-0" />}
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                    {answered && (
+                      <div className={`mt-4 ml-8 p-3 rounded-lg text-sm ${isCorrect ? "bg-green-100 text-green-800" : "bg-amber-50 text-amber-800"}`}>
+                        <p className="font-medium mb-1">{isCorrect ? "Correct!" : "Not quite."}</p>
+                        <p>{q.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Quiz Score */}
+              {Object.keys(quizState).length === lessonData.quiz.length && (
+                <div className="bg-white rounded-xl border-2 border-teal-300 p-6 text-center">
+                  <div className="text-4xl font-bold text-teal-600 mb-2">
+                    {Object.entries(quizState).filter(([qi, ans]) => ans === lessonData.quiz[qi].correct).length}/{lessonData.quiz.length}
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    {Object.entries(quizState).filter(([qi, ans]) => ans === lessonData.quiz[qi].correct).length === lessonData.quiz.length
+                      ? "Perfect score! You've mastered this lesson."
+                      : "Great effort! Review the explanations above to strengthen your understanding."}
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <button onClick={() => { setQuizState({}); }} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Retake Quiz</button>
+                    <button onClick={() => setLessonTab("worksheet")} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-teal-700 flex items-center gap-2">
+                      Continue to Worksheet <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: Worksheet */}
+          {lessonTab === "worksheet" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                    <FileText size={20} className="text-teal-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{lessonData.worksheet.title}</h3>
+                    <p className="text-xs text-gray-500">Take your time with these reflections. There are no right or wrong answers.</p>
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  {lessonData.worksheet.items.map((item, wi) => (
+                    <div key={wi}>
+                      <label className="block text-sm font-medium text-gray-800 mb-2 flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{wi + 1}</span>
+                        {item}
+                      </label>
+                      <textarea
+                        rows={4}
+                        className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 resize-y"
+                        placeholder="Write your reflection here..."
+                        value={worksheetAnswers[`${activeLesson}-${wi}`] || ""}
+                        onChange={e => setWorksheetAnswers(prev => ({ ...prev, [`${activeLesson}-${wi}`]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mark Complete / Navigation */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {!isCompleted ? (
+                    <button
+                      onClick={() => setCompletedLessons(prev => [...prev, `1-${activeLesson}`])}
+                      className="bg-teal-600 text-white px-6 py-3 rounded-xl hover:bg-teal-700 transition-colors font-medium flex items-center gap-2 w-full sm:w-auto justify-center"
+                    >
+                      <CheckSquare size={16} /> Mark Lesson Complete
+                    </button>
+                  ) : (
+                    <span className="flex items-center gap-2 text-teal-600 font-medium"><CheckCircle size={16} /> Lesson completed!</span>
+                  )}
+                  <div className="flex gap-3">
+                    <button disabled={activeLesson === 0} onClick={() => { setActiveLesson(activeLesson - 1); setLessonTab("content"); setQuizState({}); setOpenSections({}); window.scrollTo(0,0); }} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-sm">← Previous</button>
+                    <button disabled={activeLesson === mod.lessons.length - 1} onClick={() => { setActiveLesson(activeLesson + 1); setLessonTab("content"); setQuizState({}); setOpenSections({}); window.scrollTo(0,0); }} className="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-30 disabled:cursor-not-allowed text-sm">Next Lesson →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ===== GENERIC LESSON VIEWER (Modules 2-8, placeholder) =====
+  if (page === "lesson" && activeModule && activeModule !== 1 && activeLesson !== null) {
     const mod = MODULES[activeModule - 1];
     const lesson = mod.lessons[activeLesson];
     return (
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
           <button onClick={() => { setPage("course"); setActiveLesson(null); }} className="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 text-sm">
-            ← Back to Module
+            <ArrowLeft size={14} /> Back to Module
           </button>
           <span className="text-sm text-gray-500">Module {mod.id} · Lesson {activeLesson + 1} of {mod.lessons.length}</span>
         </nav>
@@ -122,8 +348,13 @@ export default function ConnectedParenting() {
           <h1 className="text-2xl font-bold text-gray-900 mb-1">{SITE.name}</h1>
           <p className="text-gray-500 mb-6">8 modules · 32 lessons · Your pace, your journey</p>
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
-            <div className="flex justify-between text-sm text-gray-600 mb-2"><span>Your Progress</span><span>25% Complete</span></div>
-            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full" style={{ width: "25%" }}></div></div>
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <span>Your Progress</span>
+              <span>{Math.round((completedLessons.length / 32) * 100)}% Complete</span>
+            </div>
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all" style={{ width: `${Math.round((completedLessons.length / 32) * 100)}%` }}></div>
+            </div>
           </div>
           <div className="space-y-4">
             {MODULES.map((mod) => (
@@ -137,15 +368,20 @@ export default function ConnectedParenting() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {mod.id <= 2 && <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">Completed</span>}
+                    {mod.id === 1 && completedLessons.filter(l => l.startsWith("1-")).length === 4 && (
+                      <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">Completed</span>
+                    )}
+                    {mod.id === 1 && completedLessons.filter(l => l.startsWith("1-")).length > 0 && completedLessons.filter(l => l.startsWith("1-")).length < 4 && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">In Progress</span>
+                    )}
                     {activeModule === mod.id ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
                   </div>
                 </button>
                 {activeModule === mod.id && (
                   <div className="border-t border-gray-100 px-5 py-3 space-y-1 bg-gray-50">
                     {mod.lessons.map((lesson, li) => (
-                      <button key={li} onClick={() => { setActiveLesson(li); setPage("lesson"); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white transition-colors text-left">
-                        {mod.id <= 2 ? <CheckCircle size={16} className="text-teal-500 shrink-0" /> : mod.free ? <Play size={16} className="text-teal-500 shrink-0" /> : <Lock size={16} className="text-gray-300 shrink-0" />}
+                      <button key={li} onClick={() => { setActiveLesson(li); setPage("lesson"); setLessonTab("content"); setQuizState({}); setOpenSections({}); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white transition-colors text-left">
+                        {completedLessons.includes(`${mod.id}-${li}`) ? <CheckCircle size={16} className="text-teal-500 shrink-0" /> : mod.free || mod.id === 1 ? <Play size={16} className="text-teal-500 shrink-0" /> : <Lock size={16} className="text-gray-300 shrink-0" />}
                         <span className="text-sm text-gray-700">{lesson}</span>
                         <span className="ml-auto text-xs text-gray-400">18 min</span>
                       </button>
