@@ -31,7 +31,7 @@ export default function ConnectedParenting() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [lessonTab, setLessonTab] = useState("content");
+  const [lessonTab, setLessonTab] = useState("video");
   const [quizState, setQuizState] = useState({});
   const [openSections, setOpenSections] = useState({});
   const [completedLessons, setCompletedLessons] = useState([]);
@@ -78,7 +78,7 @@ export default function ConnectedParenting() {
     return (
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-          <button onClick={() => { setPage("course"); setActiveLesson(null); setLessonTab("content"); setQuizState({}); setOpenSections({}); }} className="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 text-sm">
+          <button onClick={() => { setPage("course"); setActiveLesson(null); setLessonTab("video"); setQuizState({}); setOpenSections({}); }} className="text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 text-sm">
             <ArrowLeft size={14} /> Back to Module
           </button>
           <span className="text-sm text-gray-500">Module {mod.id} · Lesson {activeLesson + 1} of {mod.lessons.length}</span>
@@ -114,6 +114,7 @@ export default function ConnectedParenting() {
           {/* Tab Navigation */}
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6">
             {[
+              { key: "video", label: "Video", icon: <Play size={14} /> },
               { key: "content", label: "Lesson Content", icon: <BookOpen size={14} /> },
               { key: "quiz", label: "Quiz", icon: <HelpCircle size={14} /> },
               { key: "worksheet", label: "Worksheet", icon: <FileText size={14} /> },
@@ -123,10 +124,46 @@ export default function ConnectedParenting() {
                 onClick={() => setLessonTab(tab.key)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${lessonTab === tab.key ? "bg-white text-teal-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
-                {tab.icon} {tab.label}
+                {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
           </div>
+
+          {/* TAB: Video */}
+          {lessonTab === "video" && (
+            <div className="space-y-4">
+              <div className="bg-gray-900 rounded-2xl aspect-video flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 to-gray-900"></div>
+                <div className="relative text-center">
+                  <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4 hover:bg-white/30 cursor-pointer transition-all hover:scale-110">
+                    <Play size={36} className="text-white ml-1" />
+                  </div>
+                  <p className="text-white font-medium text-lg mb-1">{lessonTitle}</p>
+                  <p className="text-white/60 text-sm">3–5 min instruction video</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg shrink-0">L</div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Your Instructor</p>
+                    <p className="text-sm text-gray-500">Licensed Professional & Educator</p>
+                  </div>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">In this short video, I'll walk you through the key concepts for this lesson and share real examples from my work with families. Watch this first, then dive into the full lesson content for a deeper understanding.</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full"><Clock size={12} /> 3–5 minutes</span>
+                  <span className="flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full"><BookOpen size={12} /> Overview & key takeaways</span>
+                  <span className="flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full"><MessageCircle size={12} /> Real-world examples</span>
+                </div>
+              </div>
+              <div className="flex justify-center pt-2">
+                <button onClick={() => setLessonTab("content")} className="bg-teal-600 text-white px-6 py-3 rounded-xl hover:bg-teal-700 transition-colors font-medium flex items-center gap-2">
+                  Continue to Lesson Content <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* TAB: Lesson Content */}
           {lessonTab === "content" && (
@@ -277,8 +314,8 @@ export default function ConnectedParenting() {
                     <span className="flex items-center gap-2 text-teal-600 font-medium"><CheckCircle size={16} /> Lesson completed!</span>
                   )}
                   <div className="flex gap-3">
-                    <button disabled={activeLesson === 0} onClick={() => { setActiveLesson(activeLesson - 1); setLessonTab("content"); setQuizState({}); setOpenSections({}); window.scrollTo(0,0); }} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-sm">← Previous</button>
-                    <button disabled={activeLesson === mod.lessons.length - 1} onClick={() => { setActiveLesson(activeLesson + 1); setLessonTab("content"); setQuizState({}); setOpenSections({}); window.scrollTo(0,0); }} className="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-30 disabled:cursor-not-allowed text-sm">Next Lesson →</button>
+                    <button disabled={activeLesson === 0} onClick={() => { setActiveLesson(activeLesson - 1); setLessonTab("video"); setQuizState({}); setOpenSections({}); window.scrollTo(0,0); }} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-sm">← Previous</button>
+                    <button disabled={activeLesson === mod.lessons.length - 1} onClick={() => { setActiveLesson(activeLesson + 1); setLessonTab("video"); setQuizState({}); setOpenSections({}); window.scrollTo(0,0); }} className="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-30 disabled:cursor-not-allowed text-sm">Next Lesson →</button>
                   </div>
                 </div>
               </div>
@@ -380,7 +417,7 @@ export default function ConnectedParenting() {
                 {activeModule === mod.id && (
                   <div className="border-t border-gray-100 px-5 py-3 space-y-1 bg-gray-50">
                     {mod.lessons.map((lesson, li) => (
-                      <button key={li} onClick={() => { setActiveLesson(li); setPage("lesson"); setLessonTab("content"); setQuizState({}); setOpenSections({}); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white transition-colors text-left">
+                      <button key={li} onClick={() => { setActiveLesson(li); setPage("lesson"); setLessonTab("video"); setQuizState({}); setOpenSections({}); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white transition-colors text-left">
                         {completedLessons.includes(`${mod.id}-${li}`) ? <CheckCircle size={16} className="text-teal-500 shrink-0" /> : mod.free || mod.id === 1 ? <Play size={16} className="text-teal-500 shrink-0" /> : <Lock size={16} className="text-gray-300 shrink-0" />}
                         <span className="text-sm text-gray-700">{lesson}</span>
                         <span className="ml-auto text-xs text-gray-400">18 min</span>
